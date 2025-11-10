@@ -7,6 +7,7 @@ import 'package:avaliacao_instituicao/tela_registro.dart';
 import 'package:avaliacao_instituicao/tela_formulario_avaliacao.dart';
 import 'package:avaliacao_instituicao/tela_quiz.dart';
 import 'package:avaliacao_instituicao/tela_resultados_anteriores.dart';
+import 'package:avaliacao_instituicao/tela_gerenciar_usuarios.dart';
 
 void main() async {
   // Garantir que o Flutter esteja inicializado
@@ -85,6 +86,7 @@ class MyApp extends StatelessWidget {
         '/formulario': (context) => const TelaFormularioAvaliacao(),
         '/quiz': (context) => const TelaQuiz(),
         '/resultados': (context) => const TelaResultadosAnteriores(),
+        '/gerenciar-usuarios': (context) => const TelaGerenciarUsuarios(),
       },
     );
   }

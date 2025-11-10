@@ -1,9 +1,31 @@
 // tela_home.dart
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:avaliacao_instituicao/services/usuario_service.dart';
 
-class TelaHome extends StatelessWidget {
+class TelaHome extends StatefulWidget {
   const TelaHome({super.key});
+
+  @override
+  State<TelaHome> createState() => _TelaHomeState();
+}
+
+class _TelaHomeState extends State<TelaHome> {
+  final UsuarioService _usuarioService = UsuarioService();
+  bool _isAdmin = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _verificarAdmin();
+  }
+
+  Future<void> _verificarAdmin() async {
+    bool admin = await _usuarioService.isAdmin();
+    setState(() {
+      _isAdmin = admin;
+    });
+  }
 
   Future<void> _logout(BuildContext context) async {
     await FirebaseAuth.instance.signOut();
@@ -107,6 +129,21 @@ class TelaHome extends StatelessWidget {
                     child: const Text('Resultados Anteriores', style: TextStyle(fontSize: 16)),
                   ),
                   const SizedBox(height: 20),
+                  
+                  // Botão Gerenciar Usuários (apenas para admin)
+                  if (_isAdmin) ...[
+                    ElevatedButton.icon(
+                      style: buttonStyle.copyWith(
+                        backgroundColor: WidgetStateProperty.all(Colors.orange),
+                      ),
+                      onPressed: () {
+                        Navigator.pushNamed(context, '/gerenciar-usuarios');
+                      },
+                      icon: const Icon(Icons.admin_panel_settings),
+                      label: const Text('Gerenciar Usuários', style: TextStyle(fontSize: 16)),
+                    ),
+                    const SizedBox(height: 20),
+                  ],
                   
                   // Botão Logout
                   OutlinedButton.icon(

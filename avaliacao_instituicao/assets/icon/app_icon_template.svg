@@ -1,0 +1,45 @@
+<!-- Placeholder SVG Icon - Salve como app_icon.svg e converta para PNG 1024x1024 -->
+<svg width="1024" height="1024" xmlns="http://www.w3.org/2000/svg">
+  <!-- Fundo com gradiente roxo para preto -->
+  <defs>
+    <linearGradient id="background" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#403AFF;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#000000;stop-opacity:1" />
+    </linearGradient>
+    
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="8" stdDeviation="8" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  
+  <!-- Fundo com bordas arredondadas -->
+  <rect width="1024" height="1024" rx="200" fill="url(#background)"/>
+  
+  <!-- Círculo branco de fundo para o ícone -->
+  <circle cx="512" cy="450" r="280" fill="white" opacity="0.15"/>
+  
+  <!-- Ícone de documento/formulário (simplificado) -->
+  <g filter="url(#shadow)">
+    <!-- Retângulo principal do formulário -->
+    <rect x="362" y="280" width="300" height="400" rx="20" fill="white"/>
+    
+    <!-- Linhas do formulário -->
+    <line x1="402" y1="340" x2="582" y2="340" stroke="#403AFF" stroke-width="12" stroke-linecap="round"/>
+    <line x1="402" y1="400" x2="582" y2="400" stroke="#403AFF" stroke-width="12" stroke-linecap="round"/>
+    <line x1="402" y1="460" x2="582" y2="460" stroke="#403AFF" stroke-width="12" stroke-linecap="round"/>
+    <line x1="402" y1="520" x2="540" y2="520" stroke="#403AFF" stroke-width="12" stroke-linecap="round"/>
+    
+    <!-- Estrela de avaliação -->
+    <polygon points="512,590 532,640 585,647 548,682 558,735 512,710 466,735 476,682 439,647 492,640" 
+             fill="#FFD700" stroke="#FFA500" stroke-width="4"/>
+  </g>
+  
+  <!-- Texto "AI" na parte inferior -->
+  <text x="512" y="870" 
+        font-family="Arial, Helvetica, sans-serif" 
+        font-size="180" 
+        font-weight="900"
+        fill="white" 
+        text-anchor="middle"
+        opacity="0.9">AI</text>
+</svg>

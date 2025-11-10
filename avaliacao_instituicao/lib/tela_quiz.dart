@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:avaliacao_instituicao/tela_resultado_pokemon.dart';
 
 // Modelo para uma Pergunta do Quiz
 class PerguntaQuiz {
@@ -119,22 +120,17 @@ class _TelaQuizState extends State<TelaQuiz> {
             'userId': user.uid,
           });
 
-      // Mostrar resultado em um AlertDialog
+      // Navegar para tela de Pokémons com a pontuação
       if (mounted) {
-        showDialog(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: const Text('Resultado do Quiz'),
-            content: Text('Você acertou $acertos de ${_perguntas.length} perguntas!\n\nSeu resultado foi salvo.'),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(ctx).pop(); // Fecha o dialog
-                  Navigator.of(context).pop(); // Volta para a Home
-                },
-                child: const Text('OK'),
-              ),
-            ],
+        setState(() => _isLoading = false);
+        
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => TelaResultadoPokemon(
+              pontuacao: acertos,
+              totalPerguntas: _perguntas.length,
+            ),
           ),
         );
       }
