@@ -38,7 +38,7 @@ class _TelaEditarUsuarioState extends State<TelaEditarUsuario> {
       await _usuarioService.atualizarUsuario(
         userId: widget.usuario.id,
         nome: _nomeController.text.trim(),
-        email: _emailController.text.trim(),
+        email: widget.usuario.email, // Email não pode ser alterado
         tipoUsuario: _tipoUsuario,
       );
 
@@ -169,7 +169,7 @@ class _TelaEditarUsuarioState extends State<TelaEditarUsuario> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Campo Email
+                    // Campo Email (somente leitura)
                     TextFormField(
                       controller: _emailController,
                       decoration: InputDecoration(
@@ -178,17 +178,11 @@ class _TelaEditarUsuarioState extends State<TelaEditarUsuario> {
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
+                        helperText: 'Email não pode ser alterado',
+                        helperStyle: const TextStyle(fontSize: 12, color: Colors.orange),
                       ),
+                      enabled: false,
                       keyboardType: TextInputType.emailAddress,
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Por favor, digite o email';
-                        }
-                        if (!value.contains('@') || !value.contains('.')) {
-                          return 'Por favor, digite um email válido';
-                        }
-                        return null;
-                      },
                     ),
                     const SizedBox(height: 24),
 
@@ -202,29 +196,34 @@ class _TelaEditarUsuarioState extends State<TelaEditarUsuario> {
                     ),
                     const SizedBox(height: 8),
                     
-                    Row(
+                    Column(
                       children: [
-                        Expanded(
-                          child: RadioListTile<String>(
-                            title: const Text('Aluno'),
-                            value: 'aluno',
-                            groupValue: _tipoUsuario,
-                            onChanged: (value) {
-                              setState(() => _tipoUsuario = value!);
-                            },
-                            activeColor: const Color(0xFF403AFF),
-                          ),
+                        RadioListTile<String>(
+                          title: const Text('Aluno'),
+                          value: 'aluno',
+                          groupValue: _tipoUsuario,
+                          onChanged: (value) {
+                            setState(() => _tipoUsuario = value!);
+                          },
+                          activeColor: const Color(0xFF403AFF),
                         ),
-                        Expanded(
-                          child: RadioListTile<String>(
-                            title: const Text('Admin'),
-                            value: 'admin',
-                            groupValue: _tipoUsuario,
-                            onChanged: (value) {
-                              setState(() => _tipoUsuario = value!);
-                            },
-                            activeColor: const Color(0xFF403AFF),
-                          ),
+                        RadioListTile<String>(
+                          title: const Text('Professor'),
+                          value: 'professor',
+                          groupValue: _tipoUsuario,
+                          onChanged: (value) {
+                            setState(() => _tipoUsuario = value!);
+                          },
+                          activeColor: Colors.purple,
+                        ),
+                        RadioListTile<String>(
+                          title: const Text('Administrador'),
+                          value: 'admin',
+                          groupValue: _tipoUsuario,
+                          onChanged: (value) {
+                            setState(() => _tipoUsuario = value!);
+                          },
+                          activeColor: Colors.orange,
                         ),
                       ],
                     ),

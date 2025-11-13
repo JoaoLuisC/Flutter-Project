@@ -2,17 +2,50 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/pokemon_model.dart';
+import 'dart:math';
 
 class PokemonService {
-  static const String apiUrl = 'https://www.canalti.com.br/api/pokemons.json';
+  static const String pokeApiUrl = 'https://pokeapi.co/api/v2';
+  static const String backupApiUrl = 'https://www.canalti.com.br/api/pokemons.json';
+
+  // Buscar um Pokémon aleatório da PokeAPI
+  Future<Map<String, dynamic>> buscarPokemonAleatorio() async {
+    try {
+      // Gerar número aleatório entre 1 e 898 (total de pokémons na gen 8)
+      final random = Random();
+      final pokemonId = random.nextInt(898) + 1;
+      
+      print('🔍 Buscando Pokémon #$pokemonId da PokeAPI');
+      
+      final response = await http.get(
+        Uri.parse('$pokeApiUrl/pokemon/$pokemonId'),
+      ).timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          throw Exception('Timeout ao buscar Pokémon');
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        print('✅ Pokémon ${data['name']} carregado com sucesso!');
+        return data;
+      } else {
+        throw Exception('Erro ao carregar Pokémon: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('❌ Erro ao buscar Pokémon: $e');
+      throw Exception('Erro ao buscar Pokémon: $e');
+    }
+  }
 
   // Buscar todos os Pokémons da API
   Future<List<PokemonModel>> buscarPokemons() async {
     try {
-      print('🔍 Buscando Pokémons da API: $apiUrl');
+      print('🔍 Buscando Pokémons da API: $backupApiUrl');
       
       final response = await http.get(
-        Uri.parse(apiUrl),
+        Uri.parse(backupApiUrl),
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
@@ -44,7 +77,8 @@ class PokemonService {
       }
     } catch (e) {
       print('❌ Erro ao buscar Pokémons: $e');
-      throw Exception('Erro ao buscar Pokémons: $e');
+      // Retornar lista vazia ao invés de erro
+      return [];
     }
   }
 

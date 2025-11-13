@@ -3,10 +3,13 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:avaliacao_instituicao/tela_login.dart';
+import 'package:avaliacao_instituicao/tela_principal.dart';
 import 'package:avaliacao_instituicao/tela_home.dart';
 import 'package:avaliacao_instituicao/tela_registro.dart';
 import 'package:avaliacao_instituicao/tela_formulario_avaliacao.dart';
 import 'package:avaliacao_instituicao/tela_quiz.dart';
+import 'package:avaliacao_instituicao/tela_selecao_quiz.dart';
+import 'package:avaliacao_instituicao/tela_avaliacoes_admin.dart';
 import 'package:avaliacao_instituicao/tela_resultados_anteriores.dart';
 import 'package:avaliacao_instituicao/tela_gerenciar_usuarios.dart';
 
@@ -97,9 +100,12 @@ class MyApp extends StatelessWidget {
         '/': (context) => const AuthCheck(),
         '/login': (context) => const TelaLogin(),
         '/registro': (context) => const TelaRegistro(),
+        '/principal': (context) => const TelaPrincipal(),
         '/home': (context) => const TelaHome(),
         '/formulario': (context) => const TelaFormularioAvaliacao(),
         '/quiz': (context) => const TelaQuiz(),
+        '/selecao-quiz': (context) => const TelaSelecaoQuiz(),
+        '/avaliacoes-admin': (context) => const TelaAvaliacoesAdmin(),
         '/resultados': (context) => const TelaResultadosAnteriores(),
         '/gerenciar-usuarios': (context) => const TelaGerenciarUsuarios(),
       },
@@ -125,7 +131,7 @@ class AuthCheck extends StatelessWidget {
         
         // Se tiver um usuário (logado)
         if (snapshot.hasData) {
-          return const TelaHome();
+          return const TelaPrincipal();
         }
         
         // Se não tiver um usuário (deslogado)

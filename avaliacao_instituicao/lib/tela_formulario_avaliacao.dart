@@ -20,7 +20,20 @@ class _TelaFormularioAvaliacaoState extends State<TelaFormularioAvaliacao> {
   final _feedbackController = TextEditingController();
   bool _isLoading = false;
 
-  final List<String> _cursos = ['Sistemas de Informação', 'Engenharia Agronômica', 'Medicina Veterinária', 'Zootecnia', 'Administração'];
+  final List<String> _cursos = [
+    'Sistemas de Informação', 
+    'Engenharia Agronômica', 
+    'Medicina Veterinária', 
+    'Zootecnia', 
+    'Administração'
+  ];
+  
+  final List<String> _generos = [
+    'Masculino',
+    'Feminino',
+    'Não-binário',
+    'Prefiro não informar'
+  ];
 
   Future<void> _enviarFormulario() async {
     if (!(_formKey.currentState?.validate() ?? false) || _genero == null) {
@@ -39,18 +52,17 @@ class _TelaFormularioAvaliacaoState extends State<TelaFormularioAvaliacao> {
         throw Exception("Usuário não autenticado.");
       }
 
-      // Salvar dados no Cloud Firestore
+      // Salvar dados no Cloud Firestore - na coleção principal para admin ver
       await FirebaseFirestore.instance
           .collection('avaliacoes')
-          .doc(user.uid)
-          .collection('respostas')
           .add({
             'genero': _genero,
             'curso': _cursoSelecionado,
             'nota_infra': _infraestruturaNota,
             'feedback': _feedbackController.text,
-            'data_envio': Timestamp.now(),
+            'data_envio': FieldValue.serverTimestamp(),
             'userId': user.uid,
+            'userEmail': user.email,
           });
 
       if (mounted) {

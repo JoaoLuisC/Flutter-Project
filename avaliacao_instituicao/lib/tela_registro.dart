@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:avaliacao_instituicao/models/usuario_model.dart';
 
 class TelaRegistro extends StatefulWidget {
   const TelaRegistro({super.key});
@@ -16,6 +17,7 @@ class _TelaRegistroState extends State<TelaRegistro> {
   final _senhaController = TextEditingController();
   final _nomeController = TextEditingController();
   bool _isLoading = false;
+  String _tipoUsuario = 'aluno'; // aluno, professor, admin
 
   Future<void> _registrar() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
@@ -31,12 +33,19 @@ class _TelaRegistroState extends State<TelaRegistro> {
 
       // 2. Salvar dados extras no Cloud Firestore
       if (userCredential.user != null) {
+        final email = _emailController.text.trim();
+        final nome = _nomeController.text.trim();
+        final codigoAmizade = UsuarioModel.gerarCodigoAmizade(email, nome);
+        
         await FirebaseFirestore.instance
             .collection('usuarios')
             .doc(userCredential.user!.uid)
             .set({
-              'nome': _nomeController.text.trim(),
-              'email': _emailController.text.trim(),
+              'nome': nome,
+              'email': email,
+              'tipoUsuario': _tipoUsuario,
+              'codigoAmizade': codigoAmizade,
+              'amigos': [],
               'data_criacao': Timestamp.now(),
             });
       }
@@ -123,6 +132,7 @@ class _TelaRegistroState extends State<TelaRegistro> {
                     ),
                     child: TextFormField(
                       controller: _nomeController,
+                      style: const TextStyle(color: Colors.black),
                       decoration: const InputDecoration(
                         labelText: 'Nome Completo',
                         prefixIcon: Icon(Icons.person, color: Color(0xFF403AFF)),
@@ -135,6 +145,43 @@ class _TelaRegistroState extends State<TelaRegistro> {
                   ),
                   const SizedBox(height: 16),
                   
+                  // Tipo de Usuário
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12.0),
+                    ),
+                    child: DropdownButtonFormField<String>(
+                      value: _tipoUsuario,
+                      decoration: const InputDecoration(
+                        labelText: 'Tipo de Usuário',
+                        prefixIcon: Icon(Icons.account_circle, color: Color(0xFF403AFF)),
+                        border: InputBorder.none,
+                      ),
+                      dropdownColor: Colors.white,
+                      style: const TextStyle(color: Colors.black, fontSize: 16),
+                      items: const [
+                        DropdownMenuItem(
+                          value: 'aluno',
+                          child: Text('Aluno'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'professor',
+                          child: Text('Professor'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'admin',
+                          child: Text('Administrador'),
+                        ),
+                      ],
+                      onChanged: (value) {
+                        setState(() => _tipoUsuario = value!);
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  
                   // Campo Email
                   Container(
                     decoration: BoxDecoration(
@@ -143,6 +190,7 @@ class _TelaRegistroState extends State<TelaRegistro> {
                     ),
                     child: TextFormField(
                       controller: _emailController,
+                      style: const TextStyle(color: Colors.black),
                       decoration: const InputDecoration(
                         labelText: 'Email',
                         prefixIcon: Icon(Icons.email, color: Color(0xFF403AFF)),
@@ -171,6 +219,7 @@ class _TelaRegistroState extends State<TelaRegistro> {
                     ),
                     child: TextFormField(
                       controller: _senhaController,
+                      style: const TextStyle(color: Colors.black),
                       decoration: const InputDecoration(
                         labelText: 'Senha',
                         prefixIcon: Icon(Icons.lock, color: Color(0xFF403AFF)),

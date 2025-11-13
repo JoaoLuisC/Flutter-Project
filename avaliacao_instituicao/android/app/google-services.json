@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "723369301659",
+    "project_id": "avaliacao-instituicao",
+    "storage_bucket": "avaliacao-instituicao.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:723369301659:android:723b3b2f8f422e642f583e",
+        "android_client_info": {
+          "package_name": "com.example.avaliacao_instituicao"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDWBIjI5rM6UkWiV9kiW5tM4vu9i_pZgC8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

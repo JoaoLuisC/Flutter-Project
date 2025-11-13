@@ -81,12 +81,12 @@ class _TelaHomeState extends State<TelaHome> {
           ),
           // Corpo com fundo branco
           Expanded(
-            child: Padding(
+            child: SingleChildScrollView(
               padding: const EdgeInsets.all(32.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 20),
                   const Text(
                     'Bem-vindo(a) à plataforma de\nAvaliação do Aluno',
                     textAlign: TextAlign.center,
@@ -96,7 +96,7 @@ class _TelaHomeState extends State<TelaHome> {
                       height: 1.4,
                     ),
                   ),
-                  const Spacer(), // Empurra os botões para o meio
+                  const SizedBox(height: 30),
                   
                   // Botão Formulário
                   ElevatedButton(
@@ -112,9 +112,9 @@ class _TelaHomeState extends State<TelaHome> {
                   ElevatedButton(
                     style: buttonStyle,
                     onPressed: () {
-                      Navigator.pushNamed(context, '/quiz');
+                      Navigator.pushNamed(context, '/selecao-quiz');
                     },
-                    child: const Text('Quiz de conhecimento', style: TextStyle(fontSize: 16)),
+                    child: const Text('Quizzes de Conhecimento', style: TextStyle(fontSize: 16)),
                   ),
                   const SizedBox(height: 20),
                   
@@ -160,7 +160,7 @@ class _TelaHomeState extends State<TelaHome> {
                     label: const Text('Sair', style: TextStyle(fontSize: 16)),
                   ),
                   
-                  const Spacer(), // Empurra a frase para baixo
+                  const SizedBox(height: 40),
                   
                   const Text(
                     'Sua opinião é fundamental para a\nconstruirmos uma instituição cada vez melhor',

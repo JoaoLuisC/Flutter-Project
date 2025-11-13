@@ -1,6 +1,7 @@
 // tela_login.dart
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class TelaLogin extends StatefulWidget {
   const TelaLogin({super.key});
@@ -21,10 +22,56 @@ class _TelaLoginState extends State<TelaLogin> {
     setState(() => _isLoading = true);
 
     try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
+      final userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _senhaController.text.trim(),
       );
+
+      // Verificar se a conta está ativa no Firestore
+      final userDoc = await FirebaseFirestore.instance
+          .collection('usuarios')
+          .doc(userCredential.user!.uid)
+          .get();
+
+      if (!userDoc.exists) {
+        // Se não existir documento, fazer logout
+        await FirebaseAuth.instance.signOut();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Conta não encontrada. Entre em contato com o administrador.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+
+      final userData = userDoc.data();
+      
+      // Migração automática: adicionar campo 'ativo' se não existir
+      if (userData != null && !userData.containsKey('ativo')) {
+        await FirebaseFirestore.instance
+            .collection('usuarios')
+            .doc(userCredential.user!.uid)
+            .update({'ativo': true});
+      }
+      
+      if (userData?['ativo'] == false) {
+        // Se conta estiver desativada, fazer logout
+        await FirebaseAuth.instance.signOut();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Conta desativada. Entre em contato com o administrador.'),
+              backgroundColor: Colors.red,
+              duration: Duration(seconds: 5),
+            ),
+          );
+        }
+        return;
+      }
+
       // A navegação é tratada automaticamente pelo AuthCheck na main.dart
       
     } on FirebaseAuthException catch (e) {
@@ -100,6 +147,7 @@ class _TelaLoginState extends State<TelaLogin> {
                   ),
                   child: TextFormField(
                     controller: _emailController,
+                    style: const TextStyle(color: Colors.black),
                     decoration: const InputDecoration(
                       labelText: 'Email',
                       prefixIcon: Icon(Icons.email, color: Color(0xFF403AFF)),
@@ -128,6 +176,7 @@ class _TelaLoginState extends State<TelaLogin> {
                   ),
                   child: TextFormField(
                     controller: _senhaController,
+                    style: const TextStyle(color: Colors.black),
                     decoration: const InputDecoration(
                       labelText: 'Senha',
                       prefixIcon: Icon(Icons.lock, color: Color(0xFF403AFF)),

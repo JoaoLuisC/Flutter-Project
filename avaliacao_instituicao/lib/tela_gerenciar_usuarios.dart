@@ -6,7 +6,9 @@ import 'package:avaliacao_instituicao/tela_cadastro_usuario.dart';
 import 'package:avaliacao_instituicao/tela_editar_usuario.dart';
 
 class TelaGerenciarUsuarios extends StatefulWidget {
-  const TelaGerenciarUsuarios({super.key});
+  final String? filtroTipo;
+  
+  const TelaGerenciarUsuarios({super.key, this.filtroTipo});
 
   @override
   State<TelaGerenciarUsuarios> createState() => _TelaGerenciarUsuariosState();
@@ -32,7 +34,28 @@ class _TelaGerenciarUsuariosState extends State<TelaGerenciarUsuarios> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Confirmar Exclusão'),
-        content: Text('Tem certeza que deseja excluir o usuário "${usuario.nome}"?\n\nEsta ação não pode ser desfeita.'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Tem certeza que deseja excluir o usuário "${usuario.nome}"?'),
+            const SizedBox(height: 16),
+            const Text(
+              'Serão excluídos:',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+            ),
+            const Text('• Todos os dados do Firestore', style: TextStyle(fontSize: 13)),
+            const Text('• Avaliações e quizzes', style: TextStyle(fontSize: 13)),
+            const Text('• Pokémons conquistados', style: TextStyle(fontSize: 13)),
+            if (usuario.tipoUsuario == 'professor')
+              const Text('• Quizzes criados', style: TextStyle(fontSize: 13)),
+            const SizedBox(height: 12),
+            const Text(
+              '🔒 A conta será desativada e o usuário não poderá mais fazer login.',
+              style: TextStyle(fontSize: 12, color: Colors.red, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
@@ -42,21 +65,41 @@ class _TelaGerenciarUsuariosState extends State<TelaGerenciarUsuarios> {
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () async {
               Navigator.pop(ctx);
-              await _excluirUsuario(usuario.id);
+              await _excluirUsuario(usuario.id, usuario.email);
             },
-            child: const Text('Excluir'),
+            child: const Text('Excluir Dados'),
           ),
         ],
       ),
     );
   }
 
-  Future<void> _excluirUsuario(String userId) async {
+  Future<void> _excluirUsuario(String userId, String userEmail) async {
     try {
-      await _usuarioService.excluirUsuario(userId);
+      final result = await _usuarioService.excluirUsuarioCompleto(userId);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Usuário excluído com sucesso!')),
+          SnackBar(
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('✅ Usuário desativado e dados excluídos!'),
+                const SizedBox(height: 4),
+                Text(
+                  'Email: $userEmail',
+                  style: const TextStyle(fontSize: 12),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'O usuário não poderá mais fazer login no sistema.',
+                  style: TextStyle(fontSize: 11, fontStyle: FontStyle.italic),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 5),
+          ),
         );
       }
     } catch (e) {
@@ -94,11 +137,13 @@ class _TelaGerenciarUsuariosState extends State<TelaGerenciarUsuarios> {
                   icon: const Icon(Icons.arrow_back, color: Colors.white),
                   onPressed: () => Navigator.pop(context),
                 ),
-                const Expanded(
+                Expanded(
                   child: Text(
-                    'Gerenciar\nUsuários',
+                    widget.filtroTipo == null 
+                        ? 'Gerenciar\nUsuários'
+                        : 'Gerenciar\n${widget.filtroTipo == "aluno" ? "Alunos" : "Professores"}',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
@@ -127,10 +172,15 @@ class _TelaGerenciarUsuariosState extends State<TelaGerenciarUsuarios> {
                 }
 
                 List<UsuarioModel> usuarios = snapshot.data ?? [];
+                
+                // Filtrar por tipo de usuário se filtroTipo foi especificado
+                if (widget.filtroTipo != null) {
+                  usuarios = usuarios.where((u) => u.tipoUsuario == widget.filtroTipo).toList();
+                }
 
                 if (usuarios.isEmpty) {
-                  return const Center(
-                    child: Text('Nenhum usuário cadastrado.'),
+                  return Center(
+                    child: Text('Nenhum usuário ${widget.filtroTipo ?? ''} cadastrado.'),
                   );
                 }
 
@@ -150,10 +200,14 @@ class _TelaGerenciarUsuariosState extends State<TelaGerenciarUsuarios> {
                         leading: CircleAvatar(
                           backgroundColor: usuario.tipoUsuario == 'admin'
                               ? Colors.orange
+                              : usuario.tipoUsuario == 'professor'
+                              ? Colors.purple
                               : const Color(0xFF403AFF),
                           child: Icon(
                             usuario.tipoUsuario == 'admin'
                                 ? Icons.admin_panel_settings
+                                : usuario.tipoUsuario == 'professor'
+                                ? Icons.school
                                 : Icons.person,
                             color: Colors.white,
                           ),
@@ -179,17 +233,23 @@ class _TelaGerenciarUsuariosState extends State<TelaGerenciarUsuarios> {
                               decoration: BoxDecoration(
                                 color: usuario.tipoUsuario == 'admin'
                                     ? Colors.orange.shade100
+                                    : usuario.tipoUsuario == 'professor'
+                                    ? Colors.purple.shade100
                                     : Colors.blue.shade100,
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
                                 usuario.tipoUsuario == 'admin'
                                     ? 'Administrador'
+                                    : usuario.tipoUsuario == 'professor'
+                                    ? 'Professor'
                                     : 'Aluno',
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: usuario.tipoUsuario == 'admin'
                                       ? Colors.orange.shade900
+                                      : usuario.tipoUsuario == 'professor'
+                                      ? Colors.purple.shade900
                                       : Colors.blue.shade900,
                                   fontWeight: FontWeight.bold,
                                 ),

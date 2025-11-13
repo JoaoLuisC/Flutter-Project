@@ -1,16 +1,19 @@
 // tela_resultado_pokemon.dart
 import 'package:flutter/material.dart';
-import 'package:avaliacao_instituicao/models/pokemon_model.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:avaliacao_instituicao/services/pokemon_service.dart';
 
 class TelaResultadoPokemon extends StatefulWidget {
   final int pontuacao;
   final int totalPerguntas;
+  final bool pontuacaoPerfeita;
 
   const TelaResultadoPokemon({
     super.key,
     required this.pontuacao,
     required this.totalPerguntas,
+    this.pontuacaoPerfeita = false,
   });
 
   @override
@@ -19,7 +22,7 @@ class TelaResultadoPokemon extends StatefulWidget {
 
 class _TelaResultadoPokemonState extends State<TelaResultadoPokemon> {
   final PokemonService _pokemonService = PokemonService();
-  List<PokemonModel> _pokemons = [];
+  List<Map<String, dynamic>> _pokemons = [];
   bool _isLoading = true;
   String? _erro;
 
@@ -36,21 +39,31 @@ class _TelaResultadoPokemonState extends State<TelaResultadoPokemon> {
     });
 
     try {
-      // Determinar quantos Pokémons mostrar baseado na pontuação
-      int quantidade = _calcularQuantidadePokemons();
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) throw Exception('Usuário não autenticado');
+
+      // Se pontuação perfeita (10/10), buscar 2 Pokémons, senão 1
+      final quantidadePokemons = widget.pontuacaoPerfeita ? 2 : 1;
       
-      List<PokemonModel> pokemons;
-      
-      // Se teve pontuação alta (>80%), mostrar os mais fortes
-      double percentual = (widget.pontuacao / widget.totalPerguntas) * 100;
-      if (percentual >= 80) {
-        pokemons = await _pokemonService.buscarPokemonsMaisFortes(quantidade);
-      } else {
-        pokemons = await _pokemonService.buscarPokemonsAleatorios(quantidade);
+      for (int i = 0; i < quantidadePokemons; i++) {
+        final pokemon = await _pokemonService.buscarPokemonAleatorio();
+        
+        // Salvar cada Pokémon no Firestore
+        await FirebaseFirestore.instance
+            .collection('quiz_resultados')
+            .add({
+          'userId': user.uid,
+          'pontuacao': widget.pontuacao,
+          'total_perguntas': widget.totalPerguntas,
+          'pontuacao_perfeita': widget.pontuacaoPerfeita,
+          'pokemon': pokemon,
+          'data_resposta': FieldValue.serverTimestamp(),
+        });
+        
+        _pokemons.add(pokemon);
       }
 
       setState(() {
-        _pokemons = pokemons;
         _isLoading = false;
       });
     } catch (e) {
@@ -59,15 +72,6 @@ class _TelaResultadoPokemonState extends State<TelaResultadoPokemon> {
         _isLoading = false;
       });
     }
-  }
-
-  int _calcularQuantidadePokemons() {
-    double percentual = (widget.pontuacao / widget.totalPerguntas) * 100;
-    
-    if (percentual >= 90) return 10;
-    if (percentual >= 70) return 8;
-    if (percentual >= 50) return 6;
-    return 4;
   }
 
   String _obterMensagemMotivacional() {
@@ -82,6 +86,30 @@ class _TelaResultadoPokemonState extends State<TelaResultadoPokemon> {
     } else {
       return '💪 Continue se esforçando! Todo mestre começou assim!';
     }
+  }
+
+  Color _getTipoColor(String tipo) {
+    final cores = {
+      'normal': Colors.grey,
+      'fire': Colors.orange,
+      'water': Colors.blue,
+      'grass': Colors.green,
+      'electric': Colors.yellow[700]!,
+      'ice': Colors.cyan,
+      'fighting': Colors.red[900]!,
+      'poison': Colors.purple,
+      'ground': Colors.brown,
+      'flying': Colors.indigo[200]!,
+      'psychic': Colors.pink,
+      'bug': Colors.lightGreen,
+      'rock': Colors.brown[700]!,
+      'ghost': Colors.deepPurple,
+      'dragon': Colors.indigo,
+      'dark': Colors.grey[900]!,
+      'steel': Colors.blueGrey,
+      'fairy': Colors.pink[200]!,
+    };
+    return cores[tipo.toLowerCase()] ?? Colors.grey;
   }
 
   @override
@@ -140,12 +168,15 @@ class _TelaResultadoPokemonState extends State<TelaResultadoPokemon> {
           Padding(
             padding: const EdgeInsets.all(16),
             child: Text(
-              '🎁 Seus Pokémons Recompensa',
+              widget.pontuacaoPerfeita 
+                  ? '🏆 Pontuação Perfeita! 2 Pokémons Recompensa!'
+                  : '🎁 Seu Pokémon Recompensa',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
                 color: Colors.grey.shade800,
               ),
+              textAlign: TextAlign.center,
             ),
           ),
 
@@ -173,13 +204,15 @@ class _TelaResultadoPokemonState extends State<TelaResultadoPokemon> {
 
   Widget _buildContent() {
     if (_isLoading) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 16),
-            Text('Carregando Pokémons...'),
+            const CircularProgressIndicator(),
+            const SizedBox(height: 16),
+            Text(widget.pontuacaoPerfeita 
+                ? 'Carregando seus 2 Pokémons...' 
+                : 'Carregando seu Pokémon...'),
           ],
         ),
       );
@@ -192,9 +225,9 @@ class _TelaResultadoPokemonState extends State<TelaResultadoPokemon> {
           children: [
             const Icon(Icons.error_outline, size: 64, color: Colors.red),
             const SizedBox(height: 16),
-            Text('Erro ao carregar Pokémons', style: TextStyle(color: Colors.red)),
+            const Text('Erro ao carregar Pokémon', style: TextStyle(color: Colors.red)),
             const SizedBox(height: 8),
-            Text(_erro!, style: TextStyle(fontSize: 12, color: Colors.grey)),
+            Text(_erro!, style: const TextStyle(fontSize: 12, color: Colors.grey)),
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: _carregarPokemons,
@@ -209,28 +242,39 @@ class _TelaResultadoPokemonState extends State<TelaResultadoPokemon> {
       return const Center(child: Text('Nenhum Pokémon encontrado.'));
     }
 
-    return GridView.builder(
-      padding: const EdgeInsets.all(16),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        childAspectRatio: 0.75,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: _pokemons.map((pokemon) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: _buildPokemonCard(pokemon),
+            );
+          }).toList(),
+        ),
       ),
-      itemCount: _pokemons.length,
-      itemBuilder: (context, index) {
-        return _buildPokemonCard(_pokemons[index]);
-      },
     );
   }
 
-  Widget _buildPokemonCard(PokemonModel pokemon) {
-    Color cardColor = _hexToColor(pokemon.getPrimaryColor());
+  Widget _buildPokemonCard(Map<String, dynamic> pokemon) {
+    final name = pokemon['name'] ?? 'Desconhecido';
+    final id = pokemon['id'] ?? 0;
+    final imageUrl = pokemon['sprites']?['front_default'] ?? '';
+    final types = pokemon['types'] as List<dynamic>? ?? [];
+    final stats = pokemon['stats'] as List<dynamic>? ?? [];
+    
+    final primaryType = types.isNotEmpty 
+        ? types[0]['type']['name'] as String 
+        : 'normal';
+    final cardColor = _getTipoColor(primaryType);
 
     return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      elevation: 8,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       child: Container(
+        width: 300,
+        padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
@@ -240,69 +284,66 @@ class _TelaResultadoPokemonState extends State<TelaResultadoPokemon> {
               cardColor,
             ],
           ),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(24),
         ),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
             // Número
             Text(
-              '#${pokemon.number.toString().padLeft(3, '0')}',
+              '#${id.toString().padLeft(3, '0')}',
               style: const TextStyle(
-                fontSize: 12,
+                fontSize: 18,
                 color: Colors.white70,
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 16),
             
             // Imagem
-            if (pokemon.imageUrl.isNotEmpty)
+            if (imageUrl.isNotEmpty)
               Image.network(
-                pokemon.imageUrl,
-                height: 80,
-                width: 80,
+                imageUrl,
+                height: 150,
+                width: 150,
                 errorBuilder: (context, error, stackTrace) {
-                  return const Icon(Icons.catching_pokemon, size: 80, color: Colors.white);
+                  return const Icon(Icons.catching_pokemon, size: 150, color: Colors.white);
                 },
               )
             else
-              const Icon(Icons.catching_pokemon, size: 80, color: Colors.white),
+              const Icon(Icons.catching_pokemon, size: 150, color: Colors.white),
             
-            const SizedBox(height: 8),
+            const SizedBox(height: 16),
             
             // Nome
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: Text(
-                pokemon.name,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+            Text(
+              name.toUpperCase(),
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
               ),
             ),
             
-            const SizedBox(height: 4),
+            const SizedBox(height: 16),
             
             // Tipos
             Wrap(
-              spacing: 4,
-              children: pokemon.type.map((type) {
+              spacing: 8,
+              alignment: WrapAlignment.center,
+              children: types.map<Widget>((type) {
+                final typeName = type['type']['name'] as String;
                 return Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                   decoration: BoxDecoration(
-                    color: Colors.white24,
-                    borderRadius: BorderRadius.circular(12),
+                    color: Colors.white30,
+                    borderRadius: BorderRadius.circular(16),
                   ),
                   child: Text(
-                    type,
+                    typeName.toUpperCase(),
                     style: const TextStyle(
-                      fontSize: 10,
+                      fontSize: 12,
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
                     ),
@@ -311,33 +352,63 @@ class _TelaResultadoPokemonState extends State<TelaResultadoPokemon> {
               }).toList(),
             ),
             
-            const SizedBox(height: 8),
+            const SizedBox(height: 24),
             
             // Stats
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: Colors.black26,
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(16),
               ),
               child: Column(
-                children: [
-                  Text(
-                    'Total: ${pokemon.total}',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
+                children: stats.map<Widget>((stat) {
+                  final statName = stat['stat']['name'] as String;
+                  final statValue = stat['base_stat'] as int;
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          flex: 2,
+                          child: Text(
+                            statName.toUpperCase(),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.white70,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          flex: 3,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(4),
+                            child: LinearProgressIndicator(
+                              value: statValue / 255,
+                              backgroundColor: Colors.white24,
+                              valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                              minHeight: 8,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        SizedBox(
+                          width: 30,
+                          child: Text(
+                            '$statValue',
+                            textAlign: TextAlign.end,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                  Text(
-                    'HP: ${pokemon.hp} | ATK: ${pokemon.attack}',
-                    style: const TextStyle(
-                      fontSize: 10,
-                      color: Colors.white70,
-                    ),
-                  ),
-                ],
+                  );
+                }).toList(),
               ),
             ),
           ],
@@ -345,11 +416,5 @@ class _TelaResultadoPokemonState extends State<TelaResultadoPokemon> {
       ),
     );
   }
-
-  Color _hexToColor(String hexString) {
-    final buffer = StringBuffer();
-    if (hexString.length == 6 || hexString.length == 7) buffer.write('ff');
-    buffer.write(hexString.replaceFirst('#', ''));
-    return Color(int.parse(buffer.toString(), radix: 16));
-  }
 }
+
