@@ -9,11 +9,29 @@ class PokemonService {
   // Buscar todos os Pokémons da API
   Future<List<PokemonModel>> buscarPokemons() async {
     try {
-      final response = await http.get(Uri.parse(apiUrl));
+      print('🔍 Buscando Pokémons da API: $apiUrl');
+      
+      final response = await http.get(
+        Uri.parse(apiUrl),
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+      ).timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          throw Exception('Timeout: A API demorou muito para responder');
+        },
+      );
+
+      print('📡 Status Code: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         // Decodificar o JSON
-        final List<dynamic> jsonList = json.decode(response.body);
+        final Map<String, dynamic> jsonData = json.decode(response.body);
+        final List<dynamic> jsonList = jsonData['pokemon'];
+
+        print('✅ ${jsonList.length} Pokémons carregados com sucesso!');
 
         // Converter cada item para PokemonModel
         List<PokemonModel> pokemons = jsonList
@@ -25,6 +43,7 @@ class PokemonService {
         throw Exception('Erro ao carregar Pokémons: ${response.statusCode}');
       }
     } catch (e) {
+      print('❌ Erro ao buscar Pokémons: $e');
       throw Exception('Erro ao buscar Pokémons: $e');
     }
   }

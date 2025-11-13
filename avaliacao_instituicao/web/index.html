@@ -29,10 +29,46 @@
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
-  <title>avaliacao_instituicao</title>
+  <title>Avaliação Institucional</title>
   <link rel="manifest" href="manifest.json">
+
+  <!-- ========================================== -->
+  <!-- FIREBASE CONFIGURATION - IMPORTANTE!      -->
+  <!-- ========================================== -->
+  <!-- 
+    INSTRUÇÃO: Depois de criar seu projeto no Firebase Console,
+    substitua os valores abaixo pelas suas credenciais reais.
+    
+    Para obter suas credenciais:
+    1. Acesse: https://console.firebase.google.com/
+    2. Selecione seu projeto
+    3. Clique no ícone da engrenagem ⚙️ > Configurações do projeto
+    4. Role até "Seus aplicativos" > Selecione o app Web
+    5. Copie o objeto firebaseConfig
+  -->
 </head>
-<body>
+<parameter name="body">
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+  <script>
+    // ✅ Configuração do Firebase - Credenciais do projeto avaliacao-instituicao
+    const firebaseConfig = {
+      apiKey: "AIzaSyDyfR2TMG3osfOBN3A7iCr_jfVZ_-lXS2s",
+      authDomain: "avaliacao-instituicao.firebaseapp.com",
+      projectId: "avaliacao-instituicao",
+      storageBucket: "avaliacao-instituicao.firebasestorage.app",
+      messagingSenderId: "723369301659",
+      appId: "1:723369301659:web:e6787863e4a690b52f583e"
+    };
+
+    // Inicializar Firebase
+    firebase.initializeApp(firebaseConfig);
+  </script>
+
+  <!-- Flutter -->
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

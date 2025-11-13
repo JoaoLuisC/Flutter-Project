@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:avaliacao_instituicao/tela_login.dart';
@@ -13,8 +14,22 @@ void main() async {
   // Garantir que o Flutter esteja inicializado
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Inicializar o Firebase
-  await Firebase.initializeApp();
+  // Inicializar o Firebase com configuração específica para Web
+  if (kIsWeb) {
+    await Firebase.initializeApp(
+      options: const FirebaseOptions(
+        apiKey: "AIzaSyDyfR2TMG3osfOBN3A7iCr_jfVZ_-lXS2s",
+        authDomain: "avaliacao-instituicao.firebaseapp.com",
+        projectId: "avaliacao-instituicao",
+        storageBucket: "avaliacao-instituicao.firebasestorage.app",
+        messagingSenderId: "723369301659",
+        appId: "1:723369301659:web:e6787863e4a690b52f583e",
+      ),
+    );
+  } else {
+    // Para outras plataformas (Android/iOS), usar configuração padrão
+    await Firebase.initializeApp();
+  }
   
   runApp(const MyApp());
 }
